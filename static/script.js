@@ -6,6 +6,7 @@ var quill = new Quill('#editor-container', {
 // Get the elements
 var newDocumentButton = document.getElementById('new-document-button');
 var documentList = document.getElementById('document-list');
+var documentItems = document.getElementsByClassName('document-item');
 var contextTextarea = document.getElementById('context-textarea');
 var brainstormButton = document.getElementById('brainstorm-button');
 var interactionButtons = document.getElementById('interaction-buttons');
@@ -65,20 +66,36 @@ interactionButtons.addEventListener('click', function(event) {
     responseText.innerHTML = '<small>' + selectedText + '</small><br>' + response;
 });
 
+// Add event listeners to document items
+for (var i = 0; i < documentItems.length; i++) {
+    documentItems[i].addEventListener('click', function(event) {
+        var id = event.target.textContent.split(' ')[1];
+        loadDocument(id);
+    });
+}
+
 // Function to create a new document
 function createNewDocument() {
     // Send a POST request to the backend API to create a new document
     fetch('/documents', {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: '' }),  // Empty content for new document
     })
-        .then(response => {
-            let newDocId = response.id; // Get the id from response
-
-            // Save newDocId to use later
-        })
+        .then(response => response.json())
         .then(data => {
             // Handle the response from the backend API
-            // For example, add the new document to the document list
+            var id = data.id;
+            var newDocumentItem = document.createElement('div');
+            newDocumentItem.className = 'document-item';
+            newDocumentItem.textContent = 'Document ' + id;
+            newDocumentItem.addEventListener('click', function() {
+                loadDocument(id);
+            });
+            documentList.appendChild(newDocumentItem);
+            loadDocument(id);
         })
         .catch(error => {
             // Handle any errors that occur during the request
@@ -88,29 +105,19 @@ function createNewDocument() {
 
 
 // Function to load a document
-function loadDocument(docId) {
-
-  // Build URL with doc id
-  const url = `/documents/${docId}`;
-
-  // Make GET request to load document
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-
-      // Get document contents from response
-      const docContents = data.contents;
-
-      // Set editor content
-      quill.setContents(docContents);
-
-      // Update UI with loaded document
-
-    })
-    .catch(error => {
-      console.error('Error loading document:', error);
-    });
-
+function loadDocument(id) {
+    // Send a GET request to the backend API to get the content of the document
+    fetch('/documents/' + id)
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response from the backend API
+            var content = data.content;
+            quill.setContents(JSON.parse(content));
+        })
+        .catch(error => {
+            // Handle any errors that occur during the request
+            console.error('Error:', error);
+        });
 }
 
 
