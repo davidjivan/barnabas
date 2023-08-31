@@ -9,7 +9,7 @@ def init_db():
     os.makedirs('database', exist_ok=True)
     conn = sqlite3.connect('database/barnabas.db')
     c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS documents (id INTEGER PRIMARY KEY, content TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS documents (id INTEGER PRIMARY KEY, content TEXT, context TEXT)')
     conn.commit()
     conn.close()
 
@@ -26,11 +26,12 @@ def get_documents():
         conn = sqlite3.connect('database/barnabas.db')
         c = conn.cursor()
         c.execute('SELECT * FROM documents')
-        documents = [{"id": id, "content": content} for id, content in c.fetchall()]
+        documents = [{"id": id, "content": content, "context": context} for id, content, context in c.fetchall()]
         conn.close()
         return jsonify(documents)
     except Exception as e:
         return str(e), 500
+
 
 @app.route('/documents', methods=['POST'])
 def create_document():
@@ -40,8 +41,10 @@ def create_document():
 
     # Insert document into database
     content = request.json['content']
+    context = request.json['context']
     print('Content received:', content)
-    c.execute('INSERT INTO documents (content) VALUES (?)', (content,))
+    print('Context received:', context)
+    c.execute('INSERT INTO documents (content, context) VALUES (?, ?)', (content, context))
 
     # Get id of inserted row
     id = c.lastrowid
@@ -68,8 +71,10 @@ def get_document(id):
 
     if document:
         content = document[1]
+        context = document[2]
         print('Content:', content)
-        return jsonify({"id": document[0], "content": content})
+        print('Context:', context)
+        return jsonify({"id": document[0], "content": content, "context": context})
     else:
         return 'Document not found', 404
 
@@ -81,8 +86,8 @@ def update_document(id):
     conn = sqlite3.connect('database/barnabas.db')
     c = conn.cursor()
 
-    # Update the content of the document in the database
-    c.execute('UPDATE documents SET content=? WHERE id=?', (request.json['content'], id))
+    # Update the content and context of the document in the database
+    c.execute('UPDATE documents SET content=?, context=? WHERE id=?', (request.json['content'], request.json['context'], id))
 
     conn.commit()
     conn.close()

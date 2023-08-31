@@ -5,7 +5,11 @@ var quill = new Quill('#editor-container', {
 
 // Get the elements
 var newDocumentButton = document.getElementById('new-document-button');
-var documentList = document.getElementById('document-list');
+// Global variable to store the document list DOM element
+var documentListElement = document.getElementById('document-list');
+// Global variable to keep track of the document list
+var docList = [];
+
 var documentItems = document.getElementsByClassName('document-item');
 var contextTextarea = document.getElementById('context-textarea');
 var brainstormButton = document.getElementById('brainstorm-button');
@@ -13,6 +17,9 @@ var interactionButtons = document.getElementById('interaction-buttons');
 var barnabasInputText = document.getElementById('barnabas-input-text');
 var sendButton = document.getElementById('send-button');
 var responseText = document.getElementById('response-text');
+// Global variable to keep track of the current document index
+var currentDocumentIndex = null;
+
 
 
 // Add a click event listener to the create document button
@@ -25,11 +32,32 @@ brainstormButton.addEventListener('click', function() {
     // Get the context text
     var context = contextTextarea.value;
 
-    // Get the brainstorm response
-    var response = brainstorm(context);
+    // Get the last paragraph of the document
+    var content = quill.getContents();
+    var ops = content.ops;
+    var lastParagraph = ops[ops.length - 1].insert;
+    var prompt = context + '\n' + lastParagraph;
 
-    // Append the response to the Quill editor
-    quill.clipboard.dangerouslyPasteHTML(response);
+    // Send the prompt to the AI via API
+    fetch('/brainstorm', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: prompt }),
+    })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response from the AI
+            var response = data.response;
+
+            // Append the response to the document in the Quill editor
+            quill.clipboard.dangerouslyPasteHTML(quill.getLength(), response);
+        })
+        .catch(error => {
+            // Handle any errors that occur during the request
+            console.error('Error:', error);
+        });
 });
 
 // Add event listener to send button
@@ -78,9 +106,15 @@ for (var i = 0; i < documentItems.length; i++) {
 
 // Function to create a new document
 function createNewDocument() {
+    console.log('Creating document');
+
     // Get the content of the Quill editor
-    var content = JSON.stringify(quill.getContents());
+    var content = quill.getContents();
     console.log('Creating document with content:', content);
+
+    // Get the context of the document
+    var context = document.getElementById('context-textarea').value;
+    console.log('Creating document with context:', context);
 
     // Send a POST request to the backend API to create a new document
     fetch('/documents', {
@@ -88,22 +122,23 @@ function createNewDocument() {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({content: content}),
+        body: JSON.stringify({ content: JSON.stringify(content), context: context }),
     })
         .then(response => response.json())
         .then(data => {
             // Handle the response from the backend API
-            var id = data.id;
-            console.log('Document created with id:', id);
-            currentDocumentIndex = id;
+            console.log('Document created with id:', data.id);
+            currentDocumentIndex = data.id;
             updateDocumentListUI();
-            loadDocument(id);
         })
         .catch(error => {
             // Handle any errors that occur during the request
             console.error('Error:', error);
         });
 }
+
+
+
 
 
 
@@ -112,22 +147,15 @@ function createNewDocument() {
 // Function to load a document
 function loadDocument(id) {
     console.log('Loading document:', id);
+
     // Send a GET request to the backend API to get the content of the document
     fetch('/documents/' + id)
         .then(response => response.json())
         .then(data => {
             // Handle the response from the backend API
-            console.log('Document data:', data);
-            var content = data.content;
-            if (typeof content === 'string') {
-                try {
-                    content = JSON.parse(content);
-                } catch (error) {
-                    console.error('Error parsing document content:', error);
-                    content = [];
-                }
-            }
+            var content = JSON.parse(data.content);
             quill.setContents(content);
+            document.getElementById('context-textarea').value = data.context;
             currentDocumentIndex = id;
             updateDocumentListUI();
         })
@@ -142,15 +170,34 @@ function loadDocument(id) {
 
 
 
+
+// Function to load the document list
+function loadDocumentList() {
+    console.log('Loading document list');
+
+    // Send a GET request to the backend API to get the list of documents
+    fetch('/documents')
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response from the backend API
+            documentList = data;
+            updateDocumentListUI();
+        })
+        .catch(error => {
+            // Handle any errors that occur during the request
+            console.error('Error:', error);
+        });
+}
+
 // Function to update the document list UI
 function updateDocumentListUI() {
     console.log('Updating document list UI');
     console.log('Current document index:', currentDocumentIndex);
-    console.log('Document list:', documentList);
+    console.log('Document list:', docList);
 
     // Remove all document items from the document list
-    while (documentList.firstChild) {
-        documentList.removeChild(documentList.firstChild);
+    while (documentListElement.firstChild) {
+        documentListElement.removeChild(documentListElement.firstChild);
     }
 
     // Get the list of documents from the server
@@ -158,8 +205,8 @@ function updateDocumentListUI() {
         .then(response => response.json())
         .then(data => {
             // Use a different variable to store the list of documents from the server
-            var documents = data;
-            var numDocuments = documents.length;
+            docList = data;
+            var numDocuments = docList.length;
 
             // Add a document item for each document in the database
             for (var i = 1; i <= numDocuments; i++) {
@@ -173,7 +220,7 @@ function updateDocumentListUI() {
                     documentItem.addEventListener('click', function() {
                         loadDocument(i);
                     });
-                    documentList.appendChild(documentItem);
+                    documentListElement.appendChild(documentItem);
                 })(i);
             }
         })
@@ -182,6 +229,8 @@ function updateDocumentListUI() {
             console.error('Error:', error);
         });
 }
+
+
 
 
 
@@ -263,19 +312,24 @@ quill.on('text-change', function() {
     var content = quill.getContents();
     console.log('Saving document with content:', content);
 
-    // Send a PUT request to the backend API to update the content of the current document
+    // Get the context of the document
+    var context = document.getElementById('context-textarea').value;
+    console.log('Saving document with context:', context);
+
+    // Send a PUT request to the backend API to update the content and context of the current document
     fetch('/documents/' + currentDocumentIndex, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: JSON.stringify(quill.getContents()) }),
+        body: JSON.stringify({ content: JSON.stringify(content), context: context }),
     })
         .catch(error => {
             // Handle any errors that occur during the request
             console.error('Error:', error);
         });
 });
+
 
 
 
