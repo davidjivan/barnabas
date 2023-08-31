@@ -49,21 +49,40 @@ def create_document():
 
   return jsonify({'id': id})
 
+
+
 @app.route('/documents/<int:id>', methods=['GET'])
 def get_document(id):
+    print('Getting document:', id)
+    conn = sqlite3.connect('database/barnabas.db')
+    c = conn.cursor()
 
-  conn = sqlite3.connect('database/barnabas.db')
-  c = conn.cursor()
+    c.execute('SELECT * FROM documents WHERE id=?', (id,))
+    document = c.fetchone()
 
-  c.execute('SELECT * FROM documents WHERE id=?', (id,))
-  document = c.fetchone()
+    conn.close()
 
-  conn.close()
+    if document:
+        return jsonify({"id": document[0], "content": document[1]})
+    else:
+        return 'Document not found', 404
 
-  if document:
-    return jsonify(document)
-  else:
-    return 'Document not found', 404
+
+
+@app.route('/documents/<int:id>', methods=['PUT'])
+def update_document(id):
+    print('Updating document:', id)
+    conn = sqlite3.connect('database/barnabas.db')
+    c = conn.cursor()
+
+    # Update the content of the document in the database
+    c.execute('UPDATE documents SET content=? WHERE id=?', (request.json['content'], id))
+
+    conn.commit()
+    conn.close()
+
+    return '', 204
+
 
 
 if __name__ == '__main__':

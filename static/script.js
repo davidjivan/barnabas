@@ -82,7 +82,7 @@ function createNewDocument() {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: '' }),  // Empty content for new document
+        body: JSON.stringify({ content: JSON.stringify(quill.getContents()) }),
     })
         .then(response => response.json())
         .then(data => {
@@ -106,13 +106,15 @@ function createNewDocument() {
 
 // Function to load a document
 function loadDocument(id) {
+    // Add a console log
+    console.log('Loading document:', id);
     // Send a GET request to the backend API to get the content of the document
     fetch('/documents/' + id)
         .then(response => response.json())
         .then(data => {
             // Handle the response from the backend API
-            var content = data.content;
-            quill.setContents(JSON.parse(content));
+            var content = JSON.parse(data.content);
+            quill.setContents(content);
             currentDocumentIndex = id;
             updateDocumentListUI();
         })
@@ -121,6 +123,19 @@ function loadDocument(id) {
             console.error('Error:', error);
         });
 }
+
+// Function to update the document list UI
+function updateDocumentListUI() {
+    for (var i = 0; i < documentItems.length; i++) {
+        var id = documentItems[i].textContent.split(' ')[1];
+        documentItems[i].classList.remove('selected');
+        if (id == currentDocumentIndex) {
+            documentItems[i].classList.add('selected');
+        }
+    }
+}
+
+
 
 
 
@@ -179,15 +194,19 @@ function interact(action, selectedText) {
 // Load the saved documents from local storage
 loadDocument();
 
-// Function to load the saved documents from backend API
-function loadDocument(documentId) {
+// Function to load a document
+function loadDocument(id) {
+    // Add a console log
+    console.log('Loading document:', id);
     // Send a GET request to the backend API to get the content of the document
-    fetch('/documents/' + documentId)
+    fetch('/documents/' + id)
         .then(response => response.json())
         .then(data => {
             // Handle the response from the backend API
-            // For example, load the document content into the Quill editor
-            quill.setContents(data.content);
+            var content = JSON.parse(JSON.parse(data.content));
+            quill.setContents(content);
+            currentDocumentIndex = id;
+            updateDocumentListUI();
         })
         .catch(error => {
             // Handle any errors that occur during the request
@@ -196,8 +215,11 @@ function loadDocument(documentId) {
 }
 
 
+
 // Add a text change event listener to the Quill editor
 quill.on('text-change', function() {
+    // Add a console log
+    console.log('Text changed');
     // If there is no current document index, return
     if (currentDocumentIndex === null) return;
 
@@ -210,7 +232,7 @@ quill.on('text-change', function() {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: JSON.stringify(content) }),
+        body: JSON.stringify({ content: JSON.stringify(quill.getContents()) }),
     })
         .catch(error => {
             // Handle any errors that occur during the request
