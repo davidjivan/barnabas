@@ -34,20 +34,24 @@ def get_documents():
 
 @app.route('/documents', methods=['POST'])
 def create_document():
+    print('Creating document')
+    conn = sqlite3.connect('database/barnabas.db')
+    c = conn.cursor()
 
-  conn = sqlite3.connect('database/barnabas.db')
-  c = conn.cursor()
+    # Insert document into database
+    content = request.json['content']
+    print('Content received:', content)
+    c.execute('INSERT INTO documents (content) VALUES (?)', (content,))
 
-  # Insert document into database
-  c.execute('INSERT INTO documents (content) VALUES (?)', (request.json['content'],))
+    # Get id of inserted row
+    id = c.lastrowid
 
-  # Get id of inserted row
-  id = c.lastrowid
+    conn.commit()
+    conn.close()
 
-  conn.commit()
-  conn.close()
+    print('Document created with id:', id)
+    return jsonify({'id': id})
 
-  return jsonify({'id': id})
 
 
 
@@ -63,7 +67,9 @@ def get_document(id):
     conn.close()
 
     if document:
-        return jsonify({"id": document[0], "content": document[1]})
+        content = document[1]
+        print('Content:', content)
+        return jsonify({"id": document[0], "content": content})
     else:
         return 'Document not found', 404
 

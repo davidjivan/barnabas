@@ -14,12 +14,9 @@ var barnabasInputText = document.getElementById('barnabas-input-text');
 var sendButton = document.getElementById('send-button');
 var responseText = document.getElementById('response-text');
 
-// Global variable to keep track of the current document index
-var currentDocumentIndex = null;
 
-// Add event listener to new document button
+// Add a click event listener to the create document button
 newDocumentButton.addEventListener('click', function() {
-    // Create a new document
     createNewDocument();
 });
 
@@ -74,27 +71,32 @@ for (var i = 0; i < documentItems.length; i++) {
     });
 }
 
+
+
+
+
+
 // Function to create a new document
 function createNewDocument() {
+    // Get the content of the Quill editor
+    var content = JSON.stringify(quill.getContents());
+    console.log('Creating document with content:', content);
+
     // Send a POST request to the backend API to create a new document
     fetch('/documents', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: JSON.stringify(quill.getContents()) }),
+        body: JSON.stringify({content: content}),
     })
         .then(response => response.json())
         .then(data => {
             // Handle the response from the backend API
             var id = data.id;
-            var newDocumentItem = document.createElement('div');
-            newDocumentItem.className = 'document-item';
-            newDocumentItem.textContent = 'Document ' + id;
-            newDocumentItem.addEventListener('click', function() {
-                loadDocument(id);
-            });
-            documentList.appendChild(newDocumentItem);
+            console.log('Document created with id:', id);
+            currentDocumentIndex = id;
+            updateDocumentListUI();
             loadDocument(id);
         })
         .catch(error => {
@@ -104,16 +106,27 @@ function createNewDocument() {
 }
 
 
+
+
+
 // Function to load a document
 function loadDocument(id) {
-    // Add a console log
     console.log('Loading document:', id);
     // Send a GET request to the backend API to get the content of the document
     fetch('/documents/' + id)
         .then(response => response.json())
         .then(data => {
             // Handle the response from the backend API
-            var content = JSON.parse(data.content);
+            console.log('Document data:', data);
+            var content = data.content;
+            if (typeof content === 'string') {
+                try {
+                    content = JSON.parse(content);
+                } catch (error) {
+                    console.error('Error parsing document content:', error);
+                    content = [];
+                }
+            }
             quill.setContents(content);
             currentDocumentIndex = id;
             updateDocumentListUI();
@@ -124,16 +137,57 @@ function loadDocument(id) {
         });
 }
 
+
+
+
+
+
 // Function to update the document list UI
 function updateDocumentListUI() {
-    for (var i = 0; i < documentItems.length; i++) {
-        var id = documentItems[i].textContent.split(' ')[1];
-        documentItems[i].classList.remove('selected');
-        if (id == currentDocumentIndex) {
-            documentItems[i].classList.add('selected');
-        }
+    console.log('Updating document list UI');
+    console.log('Current document index:', currentDocumentIndex);
+    console.log('Document list:', documentList);
+
+    // Remove all document items from the document list
+    while (documentList.firstChild) {
+        documentList.removeChild(documentList.firstChild);
     }
+
+    // Get the list of documents from the server
+    fetch('/documents')
+        .then(response => response.json())
+        .then(data => {
+            // Use a different variable to store the list of documents from the server
+            var documents = data;
+            var numDocuments = documents.length;
+
+            // Add a document item for each document in the database
+            for (var i = 1; i <= numDocuments; i++) {
+                (function(i) {
+                    var documentItem = document.createElement('div');
+                    documentItem.className = 'document-item';
+                    if (i === currentDocumentIndex) {
+                        documentItem.classList.add('active');
+                    }
+                    documentItem.textContent = 'Document ' + i;
+                    documentItem.addEventListener('click', function() {
+                        loadDocument(i);
+                    });
+                    documentList.appendChild(documentItem);
+                })(i);
+            }
+        })
+        .catch(error => {
+            // Handle any errors that occur during the request
+            console.error('Error:', error);
+        });
 }
+
+
+
+
+
+
 
 
 
@@ -194,25 +248,7 @@ function interact(action, selectedText) {
 // Load the saved documents from local storage
 loadDocument();
 
-// Function to load a document
-function loadDocument(id) {
-    // Add a console log
-    console.log('Loading document:', id);
-    // Send a GET request to the backend API to get the content of the document
-    fetch('/documents/' + id)
-        .then(response => response.json())
-        .then(data => {
-            // Handle the response from the backend API
-            var content = JSON.parse(JSON.parse(data.content));
-            quill.setContents(content);
-            currentDocumentIndex = id;
-            updateDocumentListUI();
-        })
-        .catch(error => {
-            // Handle any errors that occur during the request
-            console.error('Error:', error);
-        });
-}
+
 
 
 
@@ -225,6 +261,7 @@ quill.on('text-change', function() {
 
     // Get the content of the Quill editor
     var content = quill.getContents();
+    console.log('Saving document with content:', content);
 
     // Send a PUT request to the backend API to update the content of the current document
     fetch('/documents/' + currentDocumentIndex, {
@@ -241,6 +278,8 @@ quill.on('text-change', function() {
 });
 
 
+
+
 // Add a blur event listener to the document list
 documentList.addEventListener('blur', function(event) {
     // If the target is not a document item, return
@@ -254,3 +293,9 @@ documentList.addEventListener('blur', function(event) {
     documentNames[index] = event.target.textContent;
     localStorage.setItem('document-names', JSON.stringify(documentNames));
 }, true);
+
+
+// Load the first document when the page loads
+window.addEventListener('load', function() {
+    loadDocument(1);
+});
