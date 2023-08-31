@@ -1,0 +1,127 @@
+body, html {
+    height: 100%;
+    margin: 0;
+}
+
+#app {
+    display: flex;
+    height: 100%;
+}
+
+#left-sidebar, #right-sidebar {
+    background-color: #f5f5f5;
+    width: 300px;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+#left-sidebar {
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+#right-sidebar {
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.document-item {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+}
+
+.document-item:hover {
+    background-color: #e0e0e0;
+}
+
+#new-document-button {
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: auto;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+}
+
+#new-document-button:hover {
+    background-color: #0056b3;
+}
+
+#content {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+#editor-container {
+    height: calc(100% - 40px); // Subtract toolbar height
+}
+
+#context-section, #interact-section, #ask-barnabas-section {
+    margin-bottom: 20px;
+}
+
+#context-textarea,
+#barnabas-input-text {
+    width: 100%;
+    box-sizing: border-box; // Make sure width is honored
+}
+
+#brainstorm-button, #interaction-buttons button, #send-button {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+}
+
+#brainstorm-button:hover, #interaction-buttons button:hover, #send-button:hover {
+    background-color: #0056b3;
+}
+
+.hidden {
+    display: none;
+}
+
+#barnabas-response {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#response-text {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#barnabas-input {
+    display: flex;
+    align-items: center;
+}
+
+#barnabas-input-text {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+#send-button {
+    padding: 10px;
+    border-radius: 5px;
+    margin-left: 10px;
+}
+
+#previous-response-button:disabled, #next-response-button:disabled {
+    background-color: #ccc;
+}
+
+#welcome-message {
+    display: none;
+    padding: 20px;
+    text-align: center;
+}

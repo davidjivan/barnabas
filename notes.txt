@@ -1,0 +1,7 @@
+Javascript functions
+
+createNewDocument
+brainstorm
+askBarnabas
+loadDocument
+saveDocument

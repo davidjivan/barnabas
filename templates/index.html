@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barnabas - Sermon Preparation Tool</title>
+    <!-- Quill document editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <!-- Link to css and js -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+<div id="app">
+    <nav id="left-sidebar">
+        <div id="document-list">
+            <div class="document-item">Document 1</div>
+            <div class="document-item">Document 2</div>
+            <div class="document-item">Document 3</div>
+        </div>
+        <button id="new-document-button">+ Create</button>
+    </nav>
+    <main id="content">
+        <div id="editor-container" class="hidden">
+            <!-- Quill editor will be inserted here -->
+        </div>
+        <div id="welcome-message">
+            Welcome to Barnabas. Select a document on the left or click "+ Create" to get started.
+        </div>
+    </main>
+    <nav id="right-sidebar" class="hidden">
+        <div id="context-section">
+            <h2>Context</h2>
+            <textarea id="context-textarea" placeholder="Add in some information about the topic you're writing about, main points you want to highlight, bible passages you're exploring, etc..."></textarea>
+            <button id="brainstorm-button">Brainstorm</button>
+        </div>
+        <div id="interact-section">
+            <h2>Interact</h2>
+            <p>Highlight some text in your document to interact with it.</p>
+            <div id="interaction-buttons">
+                <button id="expand-button">Expand on this idea</button>
+                <button id="perspectives-button">Give me different perspectives</button>
+                <button id="bible-passages-button">Find relevant bible passages</button>
+                <button id="surprise-me-button">Surprise me</button>
+            </div>
+        </div>
+        <div id="ask-barnabas-section">
+            <h2>Ask Barnabas</h2>
+            <div id="barnabas-response">
+                <button id="previous-response-button" disabled>←</button>
+                <div id="response-text"></div>
+                <button id="next-response-button" disabled>→</button>
+            </div>
+            <div id="barnabas-input">
+                <input type="text" id="barnabas-input-text" placeholder="Ask Barnabas a question">
+                <button id="send-button">↑</button>
+            </div>
+        </div>
+    </nav>
+</div>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
