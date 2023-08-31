@@ -113,12 +113,15 @@ function loadDocument(id) {
             // Handle the response from the backend API
             var content = data.content;
             quill.setContents(JSON.parse(content));
+            currentDocumentIndex = id;
+            updateDocumentListUI();
         })
         .catch(error => {
             // Handle any errors that occur during the request
             console.error('Error:', error);
         });
 }
+
 
 
 // Function to brainstorm
@@ -201,15 +204,20 @@ quill.on('text-change', function() {
     // Get the content of the Quill editor
     var content = quill.getContents();
 
-    // Get the saved documents from local storage
-    var savedDocuments = JSON.parse(localStorage.getItem('documents')) || [];
-
-    // Save the current document to the saved documents
-    savedDocuments[currentDocumentIndex] = content;
-
-    // Save the saved documents to local storage
-    localStorage.setItem('documents', JSON.stringify(savedDocuments));
+    // Send a PUT request to the backend API to update the content of the current document
+    fetch('/documents/' + currentDocumentIndex, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: JSON.stringify(content) }),
+    })
+        .catch(error => {
+            // Handle any errors that occur during the request
+            console.error('Error:', error);
+        });
 });
+
 
 // Add a blur event listener to the document list
 documentList.addEventListener('blur', function(event) {
