@@ -173,7 +173,7 @@ function createNewDocument() {
             // Handle the response from the backend API
             console.log('Document created with id:', data.id);
             currentDocumentIndex = data.id;
-            updateDocumentListUI();
+            loadDocumentList();
         })
         .catch(error => {
             // Handle any errors that occur during the request
@@ -216,7 +216,7 @@ function loadDocumentList() {
         .then(response => response.json())
         .then(data => {
             // Handle the response from the backend API
-            documentList = data;
+            docList = data;
             updateDocumentListUI();
         })
         .catch(error => {
@@ -236,34 +236,23 @@ function updateDocumentListUI() {
         documentListElement.removeChild(documentListElement.firstChild);
     }
 
-    // Get the list of documents from the server
-    fetch('/documents')
-        .then(response => response.json())
-        .then(data => {
-            // Use a different variable to store the list of documents from the server
-            docList = data;
-            var numDocuments = docList.length;
+    var numDocuments = docList.length;
 
-            // Add a document item for each document in the database
-            for (var i = 1; i <= numDocuments; i++) {
-                (function(i) {
-                    var documentItem = document.createElement('div');
-                    documentItem.className = 'document-item';
-                    if (i === currentDocumentIndex) {
-                        documentItem.classList.add('active');
-                    }
-                    documentItem.textContent = 'Document ' + i;
-                    documentItem.addEventListener('click', function() {
-                        loadDocument(i);
-                    });
-                    documentListElement.appendChild(documentItem);
-                })(i);
+    // Add a document item for each document in the database
+    for (var i = 1; i <= numDocuments; i++) {
+        (function(i) {
+            var documentItem = document.createElement('div');
+            documentItem.className = 'document-item';
+            if (i === currentDocumentIndex) {
+                documentItem.classList.add('active');
             }
-        })
-        .catch(error => {
-            // Handle any errors that occur during the request
-            console.error('Error:', error);
-        });
+            documentItem.textContent = 'Document ' + i;
+            documentItem.addEventListener('click', function() {
+                loadDocument(i);
+            });
+            documentListElement.appendChild(documentItem);
+        })(i);
+    }
 }
 
 // Load the saved documents from local storage
