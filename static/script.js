@@ -21,6 +21,7 @@ var responseText = document.getElementById('response-text');
 var currentDocumentIndex = null;
 
 
+// *** E V E N T    L I S T E N E R S *** //
 
 // Add a click event listener to the create document button
 newDocumentButton.addEventListener('click', function() {
@@ -99,10 +100,53 @@ for (var i = 0; i < documentItems.length; i++) {
     });
 }
 
+// Add a text change event listener to the Quill editor
+quill.on('text-change', function() {
+    // Add a console log
+    console.log('Text changed');
+    // If there is no current document index, return
+    if (currentDocumentIndex === null) return;
+
+    // Get the content of the Quill editor
+    var content = quill.getContents();
+    console.log('Saving document with content:', content);
+
+    // Get the context of the document
+    var context = document.getElementById('context-textarea').value;
+    console.log('Saving document with context:', context);
+
+    // Send a PUT request to the backend API to update the content and context of the current document
+    fetch('/documents/' + currentDocumentIndex, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: JSON.stringify(content), context: context }),
+    })
+        .catch(error => {
+            // Handle any errors that occur during the request
+            console.error('Error:', error);
+        });
+});
+
+// Add a blur event listener to the document list
+documentList.addEventListener('blur', function(event) {
+    // If the target is not a document item, return
+    if (event.target.className !== 'document-item') return;
+
+    // Get the document index
+    var index = Array.from(documentList.children).indexOf(event.target);
+
+    // Update the document name in local storage
+    var documentNames = JSON.parse(localStorage.getItem('document-names')) || [];
+    documentNames[index] = event.target.textContent;
+    localStorage.setItem('document-names', JSON.stringify(documentNames));
+}, true);
 
 
 
 
+// *** D O C U M E N T S *** //
 
 // Function to create a new document
 function createNewDocument() {
@@ -137,12 +181,10 @@ function createNewDocument() {
         });
 }
 
-
-
-
-
-
-
+// Load the first document when the page loads
+window.addEventListener('load', function() {
+    loadDocument(1);
+});
 
 // Function to load a document
 function loadDocument(id) {
@@ -164,12 +206,6 @@ function loadDocument(id) {
             console.error('Error:', error);
         });
 }
-
-
-
-
-
-
 
 // Function to load the document list
 function loadDocumentList() {
@@ -230,17 +266,13 @@ function updateDocumentListUI() {
         });
 }
 
+// Load the saved documents from local storage
+loadDocument();
 
 
 
 
-
-
-
-
-
-
-
+/// *** R I G H T    S I D E B A R *** ///
 
 // Function to brainstorm
 function brainstorm(context) {
@@ -264,6 +296,11 @@ function brainstorm(context) {
         });
 }
 
+// Function to interact with selected text and get a response
+function interact(action, selectedText) {
+    // For now, return a fixed response
+    return 'This is a response for the action: ' + action + ' and the selected text: ' + selectedText;
+}
 
 // Function to ask Barnabas a question and get a response
 function askBarnabas(text) {
@@ -286,70 +323,3 @@ function askBarnabas(text) {
             console.error('Error:', error);
         });
 }
-
-
-// Function to interact with selected text and get a response
-function interact(action, selectedText) {
-    // For now, return a fixed response
-    return 'This is a response for the action: ' + action + ' and the selected text: ' + selectedText;
-}
-
-// Load the saved documents from local storage
-loadDocument();
-
-
-
-
-
-// Add a text change event listener to the Quill editor
-quill.on('text-change', function() {
-    // Add a console log
-    console.log('Text changed');
-    // If there is no current document index, return
-    if (currentDocumentIndex === null) return;
-
-    // Get the content of the Quill editor
-    var content = quill.getContents();
-    console.log('Saving document with content:', content);
-
-    // Get the context of the document
-    var context = document.getElementById('context-textarea').value;
-    console.log('Saving document with context:', context);
-
-    // Send a PUT request to the backend API to update the content and context of the current document
-    fetch('/documents/' + currentDocumentIndex, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: JSON.stringify(content), context: context }),
-    })
-        .catch(error => {
-            // Handle any errors that occur during the request
-            console.error('Error:', error);
-        });
-});
-
-
-
-
-
-// Add a blur event listener to the document list
-documentList.addEventListener('blur', function(event) {
-    // If the target is not a document item, return
-    if (event.target.className !== 'document-item') return;
-
-    // Get the document index
-    var index = Array.from(documentList.children).indexOf(event.target);
-
-    // Update the document name in local storage
-    var documentNames = JSON.parse(localStorage.getItem('document-names')) || [];
-    documentNames[index] = event.target.textContent;
-    localStorage.setItem('document-names', JSON.stringify(documentNames));
-}, true);
-
-
-// Load the first document when the page loads
-window.addEventListener('load', function() {
-    loadDocument(1);
-});
