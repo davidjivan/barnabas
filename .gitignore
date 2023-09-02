@@ -1,9 +1,0 @@
-# Ignore compiled binaries and build artifacts
-*.exe
-*.o
-*.out
-/build/
-
-# Ignore sensitive configuration files
-config.ini
-secrets/
