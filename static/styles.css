@@ -129,3 +129,13 @@ body, html {
 .document-item.active {
     background-color: #ddd;
 }
+.container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#default-text {
+    text-align: center;
+}

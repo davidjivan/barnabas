@@ -18,7 +18,8 @@ var barnabasInputText = document.getElementById('barnabas-input-text');
 var sendButton = document.getElementById('send-button');
 var responseText = document.getElementById('response-text');
 // Global variable to keep track of the current document index
-var currentDocumentIndex = null;
+var currentDocumentId = null;
+
 
 
 // *** E V E N T    L I S T E N E R S *** //
@@ -104,19 +105,22 @@ for (var i = 0; i < documentItems.length; i++) {
 quill.on('text-change', function() {
     // Add a console log
     console.log('Text changed');
-    // If there is no current document index, return
-    if (currentDocumentIndex === null) return;
+    // If there is no current document id, return
+    if (currentDocumentId === null) return;
 
     // Get the content of the Quill editor
     var content = quill.getContents();
-    console.log('Saving document with content:', content);
 
     // Get the context of the document
     var context = document.getElementById('context-textarea').value;
+
+    // log what it's doing to the console
+    console.log('Saving document with id:', currentDocumentId);
+    console.log('Saving document with content:', content);
     console.log('Saving document with context:', context);
 
     // Send a PUT request to the backend API to update the content and context of the current document
-    fetch('/documents/' + currentDocumentIndex, {
+    fetch('/documents/' + (currentDocumentId), {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -129,8 +133,10 @@ quill.on('text-change', function() {
         });
 });
 
+
+
 // Add a blur event listener to the document list
-documentList.addEventListener('blur', function(event) {
+documentListElement.addEventListener('blur', function(event) {
     // If the target is not a document item, return
     if (event.target.className !== 'document-item') return;
 
@@ -147,6 +153,12 @@ documentList.addEventListener('blur', function(event) {
 
 
 // *** D O C U M E N T S *** //
+
+// Load the first document and the document list when the page loads
+window.addEventListener('load', function() {
+    loadDocument(1);
+    loadDocumentList();
+});
 
 // Function to create a new document
 function createNewDocument() {
@@ -172,8 +184,12 @@ function createNewDocument() {
         .then(data => {
             // Handle the response from the backend API
             console.log('Document created with id:', data.id);
-            currentDocumentIndex = data.id;
+            currentDocumentId = data.id;
             loadDocumentList();
+
+            // Clear the content of the Quill editor and the context textarea
+            quill.setContents([]);
+            document.getElementById('context-textarea').value = '';
         })
         .catch(error => {
             // Handle any errors that occur during the request
@@ -181,14 +197,10 @@ function createNewDocument() {
         });
 }
 
-// Load the first document when the page loads
-window.addEventListener('load', function() {
-    loadDocument(1);
-});
-
 // Function to load a document
 function loadDocument(id) {
     console.log('Loading document:', id);
+    currentDocumentId = null;  // <-- Set currentDocumentId to null before loading the new document
 
     // Send a GET request to the backend API to get the content of the document
     fetch('/documents/' + id)
@@ -198,7 +210,7 @@ function loadDocument(id) {
             var content = JSON.parse(data.content);
             quill.setContents(content);
             document.getElementById('context-textarea').value = data.context;
-            currentDocumentIndex = id;
+            currentDocumentId = id;  // <-- Set currentDocumentId to the correct value after the new document has been loaded
             updateDocumentListUI();
         })
         .catch(error => {
@@ -217,6 +229,7 @@ function loadDocumentList() {
         .then(data => {
             // Handle the response from the backend API
             docList = data;
+            console.log(data)
             updateDocumentListUI();
         })
         .catch(error => {
@@ -228,7 +241,7 @@ function loadDocumentList() {
 // Function to update the document list UI
 function updateDocumentListUI() {
     console.log('Updating document list UI');
-    console.log('Current document index:', currentDocumentIndex);
+    console.log('Current document id:', currentDocumentId);
     console.log('Document list:', docList);
 
     // Remove all document items from the document list
@@ -239,24 +252,75 @@ function updateDocumentListUI() {
     var numDocuments = docList.length;
 
     // Add a document item for each document in the database
-    for (var i = 1; i <= numDocuments; i++) {
-        (function(i) {
-            var documentItem = document.createElement('div');
-            documentItem.className = 'document-item';
-            if (i === currentDocumentIndex) {
-                documentItem.classList.add('active');
-            }
-            documentItem.textContent = 'Document ' + i;
-            documentItem.addEventListener('click', function() {
-                loadDocument(i);
-            });
-            documentListElement.appendChild(documentItem);
-        })(i);
+    for (let i = 0; i < numDocuments; i++) {
+        let documentItem = document.createElement('div');
+        documentItem.className = 'document-item';
+        if (docList[i].id === currentDocumentId) {
+            documentItem.classList.add('active');
+        }
+
+        let documentTitle = document.createElement('div');
+        documentTitle.textContent = 'Document ' + docList[i].id;
+        documentTitle.addEventListener('click', function() {
+            loadDocument(docList[i].id);
+        });
+
+        let deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', function() {
+            deleteDocument(docList[i].id);
+        });
+
+        documentItem.appendChild(documentTitle);
+        documentItem.appendChild(deleteButton);
+
+        documentListElement.appendChild(documentItem);
     }
 }
 
-// Load the saved documents from local storage
-loadDocument();
+
+
+// Function to delete a document
+function deleteDocument(id) {
+    console.log('Deleting document:', id);
+
+    // Send a DELETE request to the backend API to delete the document
+    fetch('/documents/' + id, {
+        method: 'DELETE',
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            // Reload the document list
+            return loadDocumentList();
+        })
+        .then(() => {
+            // Clear the Quill editor and the context textarea
+            quill.setContents([]);
+            document.getElementById('context-textarea').value = '';
+            // Set the current document id to null
+            currentDocumentId = null;
+            // Hide the quill editor
+            quill.enable(false);
+            document.getElementsByClassName('ql-toolbar')[0].style.display = 'none';
+            document.getElementById('editor-container').style.display = 'none';
+            // Display the default text
+            document.getElementById('default-text').style.display = 'block';
+        })
+        .catch(error => {
+            // Handle any errors that occur during the request
+            console.error('Error:', error);
+        });
+}
+
+
+
+
+
+
+
+
 
 
 

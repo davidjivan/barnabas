@@ -4,6 +4,11 @@ import os
 
 app = Flask(__name__)
 
+# Make sure your server is serving the latest version of your static files.
+# In Flask, you can do this by setting the SEND_FILE_MAX_AGE_DEFAULT configuration option to 0 during development:
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+
 # Database setup
 def init_db():
     os.makedirs('database', exist_ok=True)
@@ -15,6 +20,16 @@ def init_db():
 
 init_db()
 
+# Prevent Page Caching
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
+
+
+# App routes
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -93,6 +108,25 @@ def update_document(id):
     conn.close()
 
     return '', 204
+
+
+
+@app.route('/documents/<int:id>', methods=['DELETE'])
+def delete_document(id):
+    try:
+        conn = sqlite3.connect('database/barnabas.db')
+        c = conn.cursor()
+
+        # Delete the document from the database
+        c.execute('DELETE FROM documents WHERE id=?', (id,))
+
+        conn.commit()
+        conn.close()
+
+        return '', 204
+    except Exception as e:
+        return str(e), 500
+
 
 
 

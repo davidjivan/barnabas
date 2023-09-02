@@ -16,18 +16,20 @@
 <div id="app">
     <nav id="left-sidebar">
         <div id="document-list">
-            <div class="document-item">Document 1</div>
-            <div class="document-item">Document 2</div>
-            <div class="document-item">Document 3</div>
+            <!-- Document list will be dynamically loaded here -->
         </div>
         <button id="new-document-button">+ Create</button>
     </nav>
     <main id="content">
-        <div id="editor-container" class="">
-            <!-- Quill editor will be inserted here -->
-        </div>
-        <div id="welcome-message">
-            Welcome to Barnabas. Select a document on the left or click "+ Create" to get started.
+        <div class="container">
+            <div id ="quill-container">
+                <div id="editor-container" class="">
+                    <!-- Quill editor will be inserted here -->
+                </div>
+            </div>
+            <div id="default-text" style="display:none;">
+                Click "Create" to start a new document, or type something into the Context box and press "Brainstorm".
+            </div>
         </div>
     </main>
     <nav id="right-sidebar" class="hidden">
@@ -60,7 +62,7 @@
         </div>
     </nav>
 </div>
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </body>
 
 </html>
