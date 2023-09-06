@@ -1,17 +1,33 @@
 "use client"
+import "./globals.css"
 import { EditorContent, useEditor } from '@tiptap/react'
+import Placeholder from '@tiptap/extension-placeholder'
 import StarterKit from '@tiptap/starter-kit'
 import React from 'react'
 import 'remixicon/fonts/remixicon.css'
 
 export default function RichTextEditor() {
     const editor = useEditor({
-        extensions: [StarterKit],
-        content: '<p>Hello World! 🌎️</p>',
+        extensions: [
+            StarterKit,
+            Placeholder.configure({
+                // Use a placeholder:
+                placeholder: 'Write something …',
+                // Use different placeholders depending on the node type:
+                // placeholder: ({ node }) => {
+                //   if (node.type.name === 'heading') {
+                //     return 'What’s the title?'
+                //   }
+
+                //   return 'Can you add some further context?'
+                // },
+            }),
+        ],
+        content: '',
         editorProps: {
             attributes: {
                 class:
-                    'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none'
+                    'prose  m-5 focus:outline-none'
             }
         }
     })
@@ -44,12 +60,6 @@ export default function RichTextEditor() {
     return (
         <>
             <div className="flex p-3 justify-center space-x-2">
-                <button onClick={handleBoldClick} className="px-4 py-2">
-                    <i className="ri-bold"></i>
-                </button>
-                <button onClick={handleItalicClick} className="px-4 py-2">
-                    <i className="ri-italic"></i>
-                </button>
                 <button onClick={handleH1Click} className="px-4 py-2">
                     H1
                 </button>
@@ -62,6 +72,12 @@ export default function RichTextEditor() {
                 <button onClick={handlePClick} className="px-4 py-2">
                     Normal
                 </button>
+                <button onClick={handleBoldClick} className="px-4 py-2">
+                    <i className="ri-bold"></i>
+                </button>
+                <button onClick={handleItalicClick} className="px-4 py-2">
+                    <i className="ri-italic"></i>
+                </button>
                 <button onClick={handleBulletsClick} className="px-4 py-2">
                     <i className="ri-list-unordered"></i>
                 </button>
@@ -69,7 +85,9 @@ export default function RichTextEditor() {
                     <i className="ri-list-ordered"></i>
                 </button>
             </div>
-            <EditorContent editor={editor} />
+            <div className="flex flex-col h-full w-full overflow-auto min-w-0">
+                <EditorContent editor={editor} />
+            </div>
         </>
     )
 }

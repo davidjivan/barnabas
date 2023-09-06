@@ -8,8 +8,8 @@ export default function Home() {
 
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-8">
-      <div className="w-full items-center justify-between font-montserrat text-sm lg:flex">
+    <main className="flex min-h-screen h-screen flex-col items-center justify-between p-8">
+      <div className="w-full items-center justify-between font-montserrat text-sm max-h-full lg:flex">
         <h1 className="text-xl fixed left-0 top-0 flex w-full justify-center pb-6 pt-8 lg:static lg:w-auto lg:p-4">
          Note Title
         </h1>
@@ -32,11 +32,9 @@ export default function Home() {
         </div>
       </div>
 
-<div>
+      <div className="flex flex-col h-full px-3 lg:px-0 overflow-auto min-w-0 mx-auto max-w-lg w-full lg:w-3/5 xl:max-w-2xl bg-orange-100 rounded-[48px] min-h-xl">
 
-        <h2>Document Editor</h2>
-        <RichTextEditor/>
-
+          <RichTextEditor/>
 
       </div>
 

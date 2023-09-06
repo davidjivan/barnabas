@@ -11,6 +11,7 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.10",
     "@tiptap/extension-heading": "^2.1.8",
+    "@tiptap/extension-placeholder": "^2.1.8",
     "@tiptap/pm": "^2.1.8",
     "@tiptap/react": "^2.1.8",
     "@tiptap/starter-kit": "^2.1.8",
